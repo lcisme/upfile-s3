@@ -1,5 +1,4 @@
 
-
 class S3Uploader {
   constructor(accessKeyId, secretAccessKey, bucketName) {
     this.accessKeyId = accessKeyId;
@@ -42,12 +41,12 @@ class S3Uploader {
     this.uploadToS3(fileContent, s3Key);
   }
   // doc file url
- 
+
   uploadFileFromURL(url, s3Key) {
     https
       .get(url, (res) => {
         let data = [];
-        let contentType = res.headers['content-type']; 
+        let contentType = res.headers["content-type"];
 
         res.on("data", (chunk) => {
           data.push(chunk);
