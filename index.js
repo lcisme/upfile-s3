@@ -5,16 +5,6 @@ const port = process.env.PORT;
 const { BaseResponse } = require("./src/files/fille.common");
 const fileRouter = require("./src/files/file.routes");
 const bodyParser = require("body-parser");
-const db = require("./src/files/file.index.model");
-
-db.sequelize
-  .sync()
-  .then(() => {
-    console.log("Synced db.");
-  })
-  .catch((err) => {
-    console.log("Failed to sync db: " + err.message);
-  });
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
