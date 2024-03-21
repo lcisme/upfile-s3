@@ -1,9 +1,9 @@
-const fs = require("fs");
-const AWS = require("aws-sdk");
-const accessKeyId = "AKIAS5NJMZVTFWTBAAWF";
-const secretAccessKey = "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";
-const bucketName = "uploadfile-to-s3";
-const https = require("https");
+// const fs = require("fs");
+// const AWS = require("aws-sdk");
+// const accessKeyId = "AKIAS5NJMZVTFWTBAAWF";
+// const secretAccessKey = "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";
+// const bucketName = "uploadfile-to-s3";
+// const https = require("https");
 
 class S3Uploader {
   constructor(accessKeyId, secretAccessKey, bucketName) {
