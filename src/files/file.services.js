@@ -134,6 +134,26 @@ class S3AperoUploader extends EventEmitter {
       throw error;
     }
   }
+
+  async moveFile(s3Key, newKey) {
+    try {
+      const copyParams = {
+        Bucket: this.bucketName,
+        CopySource: `${this.bucketName}/${s3Key}`,
+        Key: newKey,
+      };
+      await this.s3.copyObject(copyParams).promise();
+      await this.s3.deleteObject({ Bucket: this.bucketName, Key: s3Key }).promise();
+      console.log('Done.');
+      this.emit("done")
+      return
+    } catch (error) {
+      console.error('Error:', error);
+      this.emit("error")
+      return
+    }
+  }
+  
 }
 
 module.exports = S3AperoUploader;

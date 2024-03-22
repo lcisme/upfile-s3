@@ -62,9 +62,22 @@ const deleteFile = async (req, res, next) => {
     return next(error);
   }
 };
+
+const moveFile = async (req, res, next) => {
+  try {
+    const s3Key = req.params.s3Key
+    console.log("f8");
+    const {  newKey } = req.body; 
+    await uploader.moveFile(s3Key, newKey);
+    res.status(200).json({ message: "Move successful" });
+  } catch (error) {
+    return next(error);
+  }
+};
 module.exports = {
   uploadFile,
   searchFile,
   updateFile,
   deleteFile,
+  moveFile
 };
