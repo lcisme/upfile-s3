@@ -1,97 +1,70 @@
-const fileService = require("./file.services");
-const uploadFile = require("./file.middleware");
-const { BaseResponse, ApplicationError } = require("./fille.common");
-const { MAXSIZE } = require("./file.config");
+const S3AperoUploader = require("./file.services");
 
-// const createFile = async (req, res, next) => {
-//   try {
-//     await uploadFile(req, res);
-//     if (req.files.length === 0) {
-//       return BaseResponse.error(res, 400, "Please upload a file!");
-//     }
-//     for (const file of req.files) {
-//       console.log(file.size);
-//       console.log(file.originalname);
-//       if (file.size > MAXSIZE) {
-//         return BaseResponse.error(
-//           res,
-//           400,
-//           `File size cannot be larger than ${MAXSIZE}MB!`
-//         );
-//       }
-//     }
-//     const files = req.files;
-//     const file = await fileService.createFile(files);
-//     console.log(file);
-//     return BaseResponse.success(
-//       res,
-//       200,
-//       "Uploaded the file successfully",
-//       file
-//     );
-//   } catch (err) {
-//     return next(new ApplicationError(500, err));
-//   }
-// };
+const accessKeyId = "AKIAS5NJMZVTFWTBAAWF";
+const secretAccessKey = "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";
+const bucketName = "uploadfile-to-s3";
 
+const uploader = new S3AperoUploader(accessKeyId, secretAccessKey, bucketName);
 
-const createFile = async (req, res, next) => {
+const uploadFile = async (req, res) => {
   try {
-    await uploadFile(req, res);
-    if (req.files.length === 0) {
-      return BaseResponse.error(res, 400, "Please upload a file!");
-    }
-    for (const file of req.files) {
-      console.log(file.size);
-      console.log(file.originalname);
-      if (file.size > MAXSIZE) {
-        return BaseResponse.error(
-          res,
-          400,
-          `File size cannot be larger than ${MAXSIZE}MB!`
-        );
-      }
-    }
-    const files = req.files;
+    const { input, s3Key } = req.body;
+    const result = await uploader.uploadFile(input, s3Key);
+    result.on("done", (location) => {
+      res.status(200).json({ message: "Upload successful", location });
+    });
+    result.on("error", (error) => {
+      res.status(500).json({ message: "Upload failed", error });
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 
-    const fileData = await fileService.createFile(files);
+const searchFile = async (req, res, next) => {
+  try {
+    console.log(req.query);
+    const input = req.query.s3Key;
+    const name = input.split("/").pop();
+    const result = await uploader.searchFile(input);
+    res.status(200).json({ message: result, name: name });
+  } catch (error) {
+    return next(error);
+  }
+};
 
-    console.log(fileData);
-    return BaseResponse.success(
-      res,
-      200,
-      "Uploaded the file successfully",
-      fileData
-    );
-  } catch (err) {
-    return next(new ApplicationError(500, err));
+const updateFile = async (req, res, next) => {
+  try {
+    const s3Key = req.params.s3Key;
+    const { input } = req.body; 
+    const result = await uploader.uploadFile(input, s3Key);
+    result.on("done", (location) => {
+      res.status(200).json({ message: "Update successful", location });
+    });
+
+    result.on("error", (error) => {
+     
+        res.status(404).json({ message: "Update failed", error });
+    })
+  } catch (error) {
+    return next(error);
   }
 };
 
 
-// const searchFile = async (req, res, next) => {
-//   const { field, key } = req.query;
-  
-//   try {
-//     if (!field || !key) {
-//       return BaseResponse.error(res, 400, "Field and key are required!");
-//     }
-
-//     const result = await searchFile(field, key);
-//     return BaseResponse.success(res, 200, "Files found successfully", result);
-//   } catch (err) {
-//     return next(new ApplicationError(500, err));
-//   }
-// };
-
-
-module.exports = { createFile };
-// const readFile = async (req, res,next) => {
-//   try {
-//     const { key } = req.params;
-//     const fileData = await fileService.readFile(key);
-//     return BaseResponse.success(res, 200, "File read successfully", fileData);
-//   } catch (err) {
-//     return next(new ApplicationError(500, err));
-//   }
-// };
+const deleteFile = async (req, res, next) => {
+  try {
+    const input = req.params.s3Key;
+    console.log(input);
+    await uploader.deleteFile(input);
+    res.send({ message: "File has been deleted successfully" });
+  } catch (error) {
+    return next(error);
+  }
+};
+module.exports = {
+  uploadFile,
+  searchFile,
+  updateFile,
+  deleteFile,
+};

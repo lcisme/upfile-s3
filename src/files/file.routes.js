@@ -1,12 +1,10 @@
 const express = require("express");
 const router = new express.Router();
-const { createFile } = require("./file.controller");
+const fileController = require("./file.controller");
 
-router.post("/upload", createFile);
-// router.get("/get", searcFile);
+router.post("/upload", fileController.uploadFile);
+router.get("/upload", fileController.searchFile);
+router.delete("/delete/:s3Key", fileController.deleteFile);
+router.patch("/update/:s3Key", fileController.updateFile);
+
 module.exports = router;
-
-
-const s3Cuong = require("")
-
-s3Cuong.upFile(file)

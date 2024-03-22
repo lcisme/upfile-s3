@@ -1,13 +1,12 @@
 const fs = require("fs");
 const AWS = require("aws-sdk");
-const accessKeyId = "AKIAS5NJMZVTFWTBAAWF";
-const secretAccessKey = "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";
-const bucketName = "uploadfile-to-s3";
 const https = require("https");
 const EventEmitter = require("events");
+const { error } = require("console");
 
-class S3AperoUploader {
+class S3AperoUploader extends EventEmitter {
   constructor(accessKeyId, secretAccessKey, bucketName) {
+    super();
     this.accessKeyId = accessKeyId;
     this.secretAccessKey = secretAccessKey;
     this.bucketName = bucketName;
@@ -21,7 +20,7 @@ class S3AperoUploader {
     const result = new EventEmitter();
 
     if (!input) {
-      result.emit("error", "File Path or URL is null.");
+      result.emit("error", "File path or URL is null.");
       return result;
     }
 
@@ -47,7 +46,7 @@ class S3AperoUploader {
       }
 
       if (!fs.existsSync(input)) {
-        result.emit("error", errorMessage);
+        result.emit("error", "File does not exist.");
         return result;
       }
 
@@ -63,8 +62,8 @@ class S3AperoUploader {
   }
 
   async uploadFileFromURL(url, s3Key) {
-    return new Promise((resolve, reject) => {
-      https.get(url, (res) => {
+    https
+      .get(url, (res) => {
         let data = [];
         let contentType = res.headers["content-type"];
         res.on("data", (chunk) => {
@@ -72,58 +71,69 @@ class S3AperoUploader {
         });
         res.on("end", () => {
           data = Buffer.concat(data);
-          this.uploadToS3(data, s3Key, contentType)
-            .then(resolve)
-            .catch(reject);
+          this.uploadToS3(data, s3Key, contentType);
+          this.emit("done");
         });
       })
       .on("error", (err) => {
         console.error("Error downloading file:", err);
-        reject(err);
+        this.emit("error", err);
       });
-    });
   }
 
   async uploadToS3(dataFile, s3Key) {
-    return new Promise((resolve, reject) => {
-      const params = {
+    const params = {
+      Bucket: this.bucketName,
+      Key: s3Key,
+      Body: dataFile,
+    };
+
+    this.s3.upload(params, (err, data) => {
+      if (err) {
+        console.error("Error uploading file:", err);
+        this.emit("error", err);
+        return;
+      }
+      console.log("Upload successful:", data.Location);
+      this.emit("done", data.Location);
+      return;
+    });
+  }
+
+  async searchFile(s3Key) {
+    const params = {
+      Bucket: this.bucketName,
+      Key: s3Key,
+    };
+    try {
+      const data = await this.s3.headObject(params).promise();
+      const location = this.s3.getSignedUrl("headObject", {
         Bucket: this.bucketName,
         Key: s3Key,
-        Body: dataFile,
-      };
-      this.s3.upload(params, (err, data) => {
-        if (err) {
-          console.error("Error uploading file:", err);
-          reject(err);
-          return;
-        }
-        console.log("Upload successful:", data.Location);
-        resolve(data.Location);
       });
-    });
+      const responseData = { ...data, Location: location };
+      this.emit("done", responseData);
+      return responseData;
+    } catch (error) {
+      this.emit("error", error);
+      throw error;
+    }
+  }
+
+  async deleteFile(s3Key) {
+    const params = {
+      Bucket: this.bucketName,
+      Key: s3Key,
+    };
+    try {
+      const data = await this.s3.deleteObject(params).promise();
+      this.emit("done");
+      return data;
+    } catch (error) {
+      this.emit("error", error);
+      throw error;
+    }
   }
 }
 
-const args = process.argv.slice(2);
-if (args.length !== 2) {
-  process.exit(1);
-}
-
-const uploader = new S3AperoUploader(accessKeyId, secretAccessKey, bucketName);
-let [input, s3Key] = args;
-
-(async () => {
-  try {
-    const result = await uploader.uploadFile(input, s3Key);
-
-    result.on("done", () => {
-      console.log("Upfile successfully !!! ");
-    });
-
-    result.on("error", (error) => {
-      console.log("Upfile failed !!!", error);
-    });
-  } catch (error) {
-    console.error("Error:", error);
-  }
-})();
+module.exports = S3AperoUploader;
