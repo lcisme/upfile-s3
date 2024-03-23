@@ -109,7 +109,7 @@ class S3AperoUploader extends EventEmitter {
         Key: s3Key,
       });
       const responseData = { ...data, Location: location };
-      this.emit("done", responseData);
+      return this.emit("done", responseData);
     } catch (error) {
       this.emit("error", error);
     }
