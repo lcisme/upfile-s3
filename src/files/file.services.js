@@ -91,11 +91,9 @@ class S3AperoUploader extends EventEmitter {
       if (err) {
         console.error("Error uploading file:", err);
         this.emit("error", err);
-        return;
       }
       console.log("Upload successful:", data.Location);
       this.emit("done", data.Location);
-      return;
     });
   }
 
@@ -112,10 +110,8 @@ class S3AperoUploader extends EventEmitter {
       });
       const responseData = { ...data, Location: location };
       this.emit("done", responseData);
-      return responseData;
     } catch (error) {
       this.emit("error", error);
-      throw error;
     }
   }
 
@@ -127,10 +123,8 @@ class S3AperoUploader extends EventEmitter {
     try {
       const data = await this.s3.deleteObject(params).promise();
       this.emit("done");
-      return data;
     } catch (error) {
       this.emit("error", error);
-      throw error;
     }
   }
 
@@ -142,14 +136,14 @@ class S3AperoUploader extends EventEmitter {
         Key: newKey,
       };
       await this.s3.copyObject(copyParams).promise();
-      await this.s3.deleteObject({ Bucket: this.bucketName, Key: s3Key }).promise();
-      console.log('Done.');
-      this.emit("done")
-      return
+      await this.s3
+        .deleteObject({ Bucket: this.bucketName, Key: s3Key })
+        .promise();
+      console.log("Done.");
+      this.emit("done");
     } catch (error) {
-      console.error('Error:', error);
-      this.emit("error")
-      return
+      console.error("Error:", error);
+      this.emit("error");
     }
   }
 
@@ -161,16 +155,15 @@ class S3AperoUploader extends EventEmitter {
         Key: newKey,
       };
       await this.s3.copyObject(copyParams).promise();
-      console.log('Done.');
-      this.emit("done")
-      return
+      console.log("Done.");
+      this.emit("done");
+      return;
     } catch (error) {
-      console.error('Error:', error);
-      this.emit("error")
-      return
+      console.error("Error:", error);
+      this.emit("error");
+      return;
     }
   }
-  
 }
 
 module.exports = S3AperoUploader;
