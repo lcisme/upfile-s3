@@ -2,7 +2,6 @@ const fs = require("fs");
 const AWS = require("aws-sdk");
 const https = require("https");
 const EventEmitter = require("events");
-const { error } = require("console");
 
 class S3AperoUploader extends EventEmitter {
   constructor(accessKeyId, secretAccessKey, bucketName) {
@@ -144,6 +143,24 @@ class S3AperoUploader extends EventEmitter {
       };
       await this.s3.copyObject(copyParams).promise();
       await this.s3.deleteObject({ Bucket: this.bucketName, Key: s3Key }).promise();
+      console.log('Done.');
+      this.emit("done")
+      return
+    } catch (error) {
+      console.error('Error:', error);
+      this.emit("error")
+      return
+    }
+  }
+
+  async copyFile(s3Key, newKey) {
+    try {
+      const copyParams = {
+        Bucket: this.bucketName,
+        CopySource: `${this.bucketName}/${s3Key}`,
+        Key: newKey,
+      };
+      await this.s3.copyObject(copyParams).promise();
       console.log('Done.');
       this.emit("done")
       return

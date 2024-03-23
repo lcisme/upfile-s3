@@ -3,7 +3,6 @@ const S3AperoUploader = require("./file.services");
 const accessKeyId = "AKIAS5NJMZVTFWTBAAWF";
 const secretAccessKey = "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";
 const bucketName = "uploadfile-to-s3";
-
 const uploader = new S3AperoUploader(accessKeyId, secretAccessKey, bucketName);
 
 const uploadFile = async (req, res) => {
@@ -66,10 +65,20 @@ const deleteFile = async (req, res, next) => {
 const moveFile = async (req, res, next) => {
   try {
     const s3Key = req.params.s3Key
-    console.log("f8");
     const {  newKey } = req.body; 
     await uploader.moveFile(s3Key, newKey);
     res.status(200).json({ message: "Move successful" });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const copyFile = async (req, res, next) => {
+  try {
+    const s3Key = req.params.s3Key
+    const {  newKey } = req.body; 
+    await uploader.copyFile(s3Key, newKey);
+    res.status(200).json({ message: "Copy successful" });
   } catch (error) {
     return next(error);
   }
@@ -79,5 +88,6 @@ module.exports = {
   searchFile,
   updateFile,
   deleteFile,
-  moveFile
+  moveFile,
+  copyFile
 };

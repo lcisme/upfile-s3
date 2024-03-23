@@ -7,5 +7,6 @@ router.get("/upload", fileController.searchFile);
 router.delete("/delete/:s3Key", fileController.deleteFile);
 router.patch("/update/:s3Key", fileController.updateFile);
 router.post("/move/:s3Key", fileController.moveFile);
+router.post("/copy/:s3Key", fileController.copyFile);
 
 module.exports = router;
